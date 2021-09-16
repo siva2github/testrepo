@@ -1,1 +1,0 @@
-/usr/bin/az vm show -d -g DevOpstestgroup -n testvm --query publicIps -o tsv >> /etc/ansible/hosts
