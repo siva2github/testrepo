@@ -1,0 +1,17 @@
+---
+#Simple Ansible Playbook to pull Docker Image from the registry and run a Docker containers
+
+- hosts: all
+  become: true
+
+  tasks:
+     - name: getting docker image from dockerhub
+       command: sudo docker pull dockersiva1/myapp1:latest
+
+
+     - name: stop all dockers if already running
+       shell: sudo service docker restart
+
+
+     - name: finalstep
+       shell: sudo docker run -p 8080:8080 -dt dockersiva1/myapp1:latest
