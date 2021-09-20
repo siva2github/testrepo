@@ -8,20 +8,19 @@ provider "azurerm" {
   tenant_id       = var.tenant_id
 }
 
-
 #create resource group
 resource "azurerm_resource_group" "rg" {
-    name     = "${var.system}-DevOpsProject1-rg"
+    name     = "${var.project}-rg"
     location = var.location
     tags      = {
-      Environment = var.system
+      Environment = var.project
     }
 }
 
 #Create virtual network
 resource "azurerm_virtual_network" "vnet" {
     
-    name                = "vnet-dev-${var.system}"
+    name                = "vnet-dev-${var.project}"
     address_space       = var.vnet_address_space
     location            = azurerm_resource_group.rg.location
     resource_group_name = azurerm_resource_group.rg.name
@@ -30,10 +29,10 @@ resource "azurerm_virtual_network" "vnet" {
 # Create subnet
 resource "azurerm_subnet" "subnet" {
   
-  name                 = "snet-dev-${var.system}"
+  name                 = "snet-dev-${var.project}"
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes       = ["10.0.1.0/24"]
+  address_prefixes     = ["10.0.1.0/24"]
 
 }
 
@@ -41,7 +40,7 @@ resource "azurerm_subnet" "subnet" {
 resource "azurerm_public_ip" "publicip" {
   count = var.count_value
 
-  name                = "pip-${var.servername}-${count.index}"
+  name                = "pip-${var.vmnodename[count.index]}"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   allocation_method   = "Static"
@@ -52,7 +51,7 @@ resource "azurerm_public_ip" "publicip" {
 resource "azurerm_network_security_group" "nsg" {
   count = var.count_value
 
-  name                = "nsg-${var.system}-${count.index} "
+  name                = "nsg-${var.vmnodename[count.index]}"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   #network_security_group_id = azurerm_network_security_group.nsg[count.index].id
@@ -74,11 +73,11 @@ resource "azurerm_network_security_group" "nsg" {
   resource "azurerm_network_interface" "nic" {
   count = var.count_value
 
-  name                      = "nic-${var.servername}-${count.index}"
+  name                      = "nic-${var.vmnodename[count.index]}"
   location                  = azurerm_resource_group.rg.location
   resource_group_name       = azurerm_resource_group.rg.name
   ip_configuration {
-    name                          = "niccfg-${var.servername}-${count.index}"
+    name                          = "niccfg-${var.vmnodename[count.index]}"
     subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "dynamic"
     public_ip_address_id          = azurerm_public_ip.publicip[count.index].id
@@ -92,7 +91,7 @@ resource "azurerm_network_security_group" "nsg" {
   resource "azurerm_linux_virtual_machine" "vm" {
   count = var.count_value
 
-  name = "${var.vmnodename[count.index]}"
+  name = var.vmnodename[count.index]
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.nic[count.index].id]
@@ -105,7 +104,7 @@ resource "azurerm_network_security_group" "nsg" {
    ]
 
    os_disk {
-    name              = "stvm-${var.servername}-${count.index}-os"
+    name              = "stvm-${var.vmnodename[count.index]}-os"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
     
@@ -118,7 +117,7 @@ resource "azurerm_network_security_group" "nsg" {
 }
 
   tags = {
-    environment = "${var.servername}-${count.index}"
+    environment = var.vmnodename[count.index]
 
   }
 
@@ -126,8 +125,8 @@ resource "azurerm_network_security_group" "nsg" {
    connection {
        type     = "ssh"
        host = "${azurerm_public_ip.publicip[count.index].ip_address}"
-       user     = "${var.admin_username}"
-       password = "${var.admin_password}"
+       user     = var.admin_username
+       password = var.admin_password
    }
 
    source = "master.sh"
@@ -140,8 +139,8 @@ resource "azurerm_network_security_group" "nsg" {
     connection {
         type     = "ssh"
         host = "${azurerm_public_ip.publicip[count.index].ip_address}"
-        user     = "${var.admin_username}"
-        password = "${var.admin_password}"
+        user     = var.admin_username
+        password = var.admin_password
     }
 
      inline = [

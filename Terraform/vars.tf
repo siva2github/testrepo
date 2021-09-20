@@ -19,14 +19,9 @@ variable "count_value"{
   default = 1
 }
 
-variable "system" {
+variable "project" {
     type = string
     description = "Name of the system or environment"
-}
-
-variable "servername" {
-    type = string
-    description = "Server name of the virtual machine"
 }
 
 variable "location" {
@@ -35,10 +30,7 @@ variable "location" {
     default = "centralus"
 
 }
-variable "environment"{
-  type = string
-  default = "test"
-}
+
 variable "admin_username" {
     type = string
     description = "Administrator username for server"
